@@ -166,6 +166,35 @@ class RVCInference:
             processed_files.append(output_path)
 
         return processed_files
+    
+    def infer_bytes(self, array):
+        """Processes a ndarray.
+
+        Args:
+            array (ndarray): ndarray sampled to 16000.            
+        """
+        if not self.current_model:
+            raise ValueError("Please load a model first.")
+
+        model_info = self.models[self.current_model]
+        file_index = model_info.get("index", "")
+
+        wav_opt = self.vc.vc_bytes(
+            sid=0,
+            audio=array,
+            f0_up_key=self.f0up_key,
+            f0_method=self.f0method,
+            file_index=file_index,
+            index_rate=self.index_rate,
+            filter_radius=self.filter_radius,
+            resample_sr=self.resample_sr,
+            rms_mix_rate=self.rms_mix_rate,
+            protect=self.protect,
+            f0_file="",
+            file_index2=""
+        )
+
+        return wav_opt
 
     def set_device(self, device):
         """Sets the device for computations.

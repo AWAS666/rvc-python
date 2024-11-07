@@ -215,6 +215,80 @@ class VC:
             info = traceback.format_exc()
             logger.warning(info)
             return info, (None, None)
+        
+    def vc_bytes(
+        self,
+        sid,
+        audio,
+        f0_up_key,
+        f0_file,
+        f0_method,
+        file_index,
+        file_index2,
+        index_rate,
+        filter_radius,
+        resample_sr,
+        rms_mix_rate,
+        protect,
+    ):
+        f0_up_key = int(f0_up_key)
+        try:
+            audio_max = np.abs(audio).max() / 0.95
+            if audio_max > 1:
+                audio /= audio_max
+            times = [0, 0, 0]
+
+            if self.hubert_model is None:
+                self.hubert_model = load_hubert(self.config,self.lib_dir)
+
+            if file_index:
+                file_index = (
+                    file_index.strip(" ")
+                    .strip('"')
+                    .strip("\n")
+                    .strip('"')
+                    .strip(" ")
+                    .replace("trained", "added")
+                )
+            elif file_index2:
+                file_index = file_index2
+            else:
+                file_index = ""  # 防止小白写错，自动帮他替换掉
+
+            audio_opt = self.pipeline.pipeline(
+                self.hubert_model,
+                self.net_g,
+                sid,
+                audio,
+                "placeholder, harvest caches this????",
+                times,
+                f0_up_key,
+                f0_method,
+                file_index,
+                index_rate,
+                self.if_f0,
+                filter_radius,
+                self.tgt_sr,
+                resample_sr,
+                rms_mix_rate,
+                self.version,
+                protect,
+                f0_file,
+            )
+            if self.tgt_sr != resample_sr >= 16000:
+                tgt_sr = resample_sr
+            else:
+                tgt_sr = self.tgt_sr
+            index_info = (
+                "Index:\n%s." % file_index
+                if os.path.exists(file_index)
+                else "Index not used."
+            )
+            return audio_opt
+        except:
+            info = traceback.format_exc()
+            logger.warning(info)
+            return info, (None, None)
 
     def vc_multi(
         self,
